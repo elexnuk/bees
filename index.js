@@ -50,6 +50,7 @@ async function initialiseKeyvData() {
 await initialiseKeyvData();
 
 async function initialiseCronSchedule() {
+    // TODO:
     // "*/2 * * * *" => check democlub, bbc, every 2 minutes
     // "0 * * * *" => post results to discord every hour
     // "0 22 * * 4" => polls close at 10pm on a Thursday
