@@ -32,7 +32,7 @@ client.on(Events.MessageCreate, async message => {
 	for (const channel of channels) {
 		if (channel.channel === message.channel.id && message.channel.type == ChannelType.GuildAnnouncement) {
 			try {
-				await message.crosspost(); // crosspost the message
+			//	await message.crosspost(); // crosspost the message
 			} catch (err) {
 				console.error(`Failed to crosspost message: ${err}`);
 			}

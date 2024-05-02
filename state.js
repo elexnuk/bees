@@ -32,6 +32,8 @@ async function checkKeyvData(election_date) {
         await keyv.set("electionDataPopulated", election_date);
         await keyv.set("elections", election_ids);
         await keyv.set("ballots", ballot_ids);
+
+        await keyv.set("election_channels", [ {guild: "762763205239111801", channel: "971875743686594633"} ]);
     }
 }
 

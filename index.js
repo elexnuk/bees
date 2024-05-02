@@ -30,6 +30,7 @@ import { schedule } from "node-cron";
 import { keyv as db, checkKeyvData } from "./state.js";
 import { getAllElections, getAllBallots, runCron as dcCron } from "./democracyclub.js";
 import { client, sendToChannel } from "./discord.js";
+import { bbcCronJob } from "./bbc.js";
 
 const election_date = "2024-05-02";
 let retry_count = 0;
@@ -50,20 +51,43 @@ async function initialiseKeyvData() {
 await initialiseKeyvData();
 
 async function initialiseCronSchedule() {
-    // TODO:
     // "*/2 * * * *" => check democlub, bbc, every 2 minutes
-    // "0 * * * *" => post results to discord every hour
+    // "*/15 * * * *" => post results to discord quarter hour
     // "0 22 * * 4" => polls close at 10pm on a Thursday
+
+    schedule("*/15 * * * *", async () => {
+        // check for an update in the main counciller scoreboard and send if been updated in the last 15 minutes
+        const last_update = await db.get("previous_scoreboard_lastUpdated");
+        const current_time = new Date();
+        const fifteen_minutes_ago = new Date(current_time.getTime() - 15 * 60000);
+        if (last_update && new Date(last_update) > fifteen_minutes_ago) {
+            console.log("Sending main scoreboard update");
+            const scoreboard = await db.get("previous_scoreboard");
+            // TODO convert scoreboard to embed
+            const channel_list = await db.get("election_channels");
+            for (const channel of channel_list) {
+                await sendToChannel(channel.channel, "## Election Results Update", { embeds: [scoreboard] });
+            }
+        } else {
+            console.log("No main scoreboard update to send");
+        }
+    });
 
     schedule("*/2 * * * *", async () => {
         dcCron(sendToChannel);
+        bbcCronJob(async (msg) => {
+            const channel_list = await db.get("election_channels");
+            for (const channel of channel_list) {
+                await sendToChannel(channel.channel, msg);
+            }
+        });
     });
 
     schedule("0 22 * * 4", async () => {
         // poll closed
         const channel_list = await db.get("election_channels");
         for (const channel of channel_list) {
-            await sendToChannel(channel.channel, "# Polls Have Closed! for the Local Elections 2024.");
+            await sendToChannel(channel.channel, "# Polls Have Closed!.");
         }
     });
 }

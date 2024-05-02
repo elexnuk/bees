@@ -1,4 +1,4 @@
-import { SlashCommandBuilder } from "discord.js";
+import { SlashCommandBuilder, PermissionFlagsBits } from "discord.js";
 import { keyv as db } from "../../state.js";
 import { democracyClubResultEmbed } from "../../messages.js";
 import { fetchJson } from "../../network.js";
@@ -9,6 +9,13 @@ export const data = new SlashCommandBuilder()
     .setDescription("Tests the Democracy Club embed.");
 
 export async function execute(interaction) {
+
+    let permissions = interaction.memberPermissions;
+    if (!permissions.has(PermissionFlagsBits.ManageChannels)) {
+        await interaction.reply({ content: "You do not have permission to send a test.", ephemeral: true });
+        return;
+    }
+
     let embeds = [];
     const results = await fetchJson("https://candidates.democracyclub.org.uk/api/next/results/?election_date=2024-04-25&last_updated=2024-04-26T09:00:00Z");
 

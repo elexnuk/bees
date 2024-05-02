@@ -2,9 +2,8 @@
 
 Periodic Checks of Results:
 - [x] DemocracyClub Results JSON?
-- [ ] DemocracyClub Winner ATOM feed?
-- [ ] BBC Election Councils
-- [ ] BBC Election Results (Scorecard for Parties)
+- [x] BBC Election Councils
+- [x] BBC Election Results (Scorecard for Parties)
 - [x] ... and outputting these to a discord channel
 
 Discord Bot Funcitonality

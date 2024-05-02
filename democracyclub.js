@@ -121,7 +121,7 @@ async function checkResultsSince(last_date) {
 
 async function runCron(sendToChannel) {
     
-    const last_date = await db.get("LAST_DC_RESULT_TIME");
+    let last_date = await db.get("LAST_DC_RESULT_TIME");
     if (!last_date) {
         last_date = (new Date()).toISOString();
         console.log(`No last date found. Setting to ${last_date}`);
