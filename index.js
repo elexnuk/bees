@@ -75,9 +75,9 @@ async function initialiseCronSchedule() {
             
             let embeds = [
                 (await createScoreboardSummary()), 
-                (await createMayorboardSummary("Mayorboard")),
-                (await createMayorboardSummary("EnglandPCC")),
-                (await createMayorboardSummary("WalesPCC"))
+                // (await createMayorboardSummary("Mayorboard")),
+                // (await createMayorboardSummary("EnglandPCC")),
+                // (await createMayorboardSummary("WalesPCC"))
             ];
             try {
                 await sendToAllElectionChannels({ embeds });
