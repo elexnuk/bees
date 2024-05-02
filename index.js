@@ -25,6 +25,7 @@
 // extension: parse the data we get an output a graph.
 
 import "dotenv/config";
+import { schedule } from "node-cron";
 
 import { keyv as db, checkKeyvData } from "./state.js";
 import { getAllElections, getAllBallots } from "./democracyclub.js";
@@ -47,6 +48,13 @@ async function initialiseKeyvData() {
     }
 }
 await initialiseKeyvData();
+
+async function initialiseCronSchedule() {
+    // "*/2 * * * *" => check democlub, bbc, every 2 minutes
+    // "0 * * * *" => post results to discord every hour
+    // "0 22 * * 4" => polls close at 10pm on a Thursday
+}
+await initialiseCronSchedule();
 
 async function runDiscord() {
     if (retry_count > 20) return false;
