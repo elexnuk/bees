@@ -32,9 +32,18 @@ import { getAllElections, getAllBallots, runCron as dcCron } from "./democracycl
 import { client, sendToChannel } from "./discord.js";
 import { bbcCronJob } from "./bbc.js";
 import { scoreboardEmbed } from "./messages.js";
+import { createScoreboardSummary } from "./scoreboard.js";
+import { createMayorboardSummary } from "./pccMayorboard.js";
 
 const election_date = "2024-05-02";
 let retry_count = 0;
+
+async function sendToAllElectionChannels(msg) {
+    const channel_list = await db.get("election_channels");
+    for (const channel of channel_list) {
+        sendToChannel(channel.channel, msg).catch(err => console.error("Error sending message to channel: ", err));
+    }
+}
 
 async function initialiseKeyvData() {
     if (retry_count > 10) return false;
@@ -58,40 +67,37 @@ async function initialiseCronSchedule() {
 
     schedule("*/15 * * * *", async () => {
         // check for an update in the main counciller scoreboard and send if been updated in the last 15 minutes
-        const last_update = await db.get("previous_scoreboard_lastUpdated");
+        const last_update = await db.get("Scoreboard-LastUpdated");
         const current_time = new Date();
         const fifteen_minutes_ago = new Date(current_time.getTime() - 15 * 60000);
         if (last_update && new Date(last_update) > fifteen_minutes_ago) {
-            console.log("Sending main scoreboard update");
-            const scoreboard = await db.get("previous_scoreboard");
-            // convert scoreboard to embed
-            let embed = scoreboardEmbed(scoreboard);
-            const channel_list = await db.get("election_channels");
-            for (const channel of channel_list) {
-                await sendToChannel(channel.channel, "## Election Results Update", { embeds: [embed] });
-            }
+            console.log(new Date().toISOString() + "] Sending main scoreboard update");
+            
+            let embeds = [
+                createScoreboardSummary(), 
+                createMayorboardSummary("Mayorboard"),
+                createMayorboardSummary("EnglandPCC"),
+                createMayorboardSummary("WalesPCC")
+            ];
+
+            await sendToAllElectionChannels({ embeds });
         } else {
-            console.log("No main scoreboard update to send");
+            console.log(new Date().toISOString() + "] No main scoreboard update to send");
         }
     });
 
     schedule("*/2 * * * *", async () => {
-        dcCron(sendToChannel);
-        bbcCronJob(async (msg) => {
-            const channel_list = await db.get("election_channels");
-            for (const channel of channel_list) {
-                await sendToChannel(channel.channel, msg);
-            }
-        });
+        await dcCron(sendToChannel);
+        await bbcCronJob(sendToAllElectionChannels);
     });
 
-    schedule("0 22 * * 4", async () => {
-        // poll closed
-        const channel_list = await db.get("election_channels");
-        for (const channel of channel_list) {
-            await sendToChannel(channel.channel, "# Polls Have Closed!.");
-        }
-    });
+    // schedule("0 22 * * 4", async () => {
+    //     // poll closed
+    //     const channel_list = await db.get("election_channels");
+    //     for (const channel of channel_list) {
+    //         await sendToChannel(channel.channel, "# Polls Have Closed!.");
+    //     }
+    // });
 }
 await initialiseCronSchedule();
 

@@ -101,6 +101,7 @@ async function getAllElections(election_date) {
 
 async function checkResultsSince(last_date) {
     const url = getResultDataUrl({ electionDate: "2024-05-02", allSince: last_date });
+    console.log("\t" + url);
     try {
         const data = await fetchJson(url);
         const results = data.results;
@@ -119,7 +120,7 @@ async function checkResultsSince(last_date) {
     }
 }
 
-async function runCron(sendToChannel) {
+async function runCron(sendToAllChannels) {
     
     let last_date = await db.get("LAST_DC_RESULT_TIME");
     if (!last_date) {
@@ -134,7 +135,7 @@ async function runCron(sendToChannel) {
     if (results.length > 0) {
         const new_date = new Date().toISOString();
 
-        console.log(`Found ${results.length} new results at ${new_date}`);
+        console.log(`${new Date().toISOString()}] Found ${results.length} new results at ${new_date}`);
         await db.set("LAST_DC_RESULT_TIME", new_date);
 
         for (const result of results) {
@@ -144,16 +145,10 @@ async function runCron(sendToChannel) {
 
             let embed = democracyClubResultEmbed(result, ballot_information, election_information);
 
-            const channel_list = await db.get("election_channels");
-            for (const channel of channel_list) {
-                // const channel_id = channel.channel;
-                // const channel_obj = await client.channels.fetch(channel_id);
-                //await channel_obj.send({ embeds: [embed] });
-                await sendToChannel(channel.channel, { embeds: [embed] });
-            }
+            await sendToAllChannels({ content: "## New DemocracyClub Result", embeds: [embed] });
         }
     } else {
-        console.log("DemocracyClub cron: No new results found");
+        console.log(new Date().toISOString() + "] DemocracyClub cron: No new results found");
     }
 }
 
