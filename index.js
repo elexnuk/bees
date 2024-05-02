@@ -31,6 +31,7 @@ import { keyv as db, checkKeyvData } from "./state.js";
 import { getAllElections, getAllBallots, runCron as dcCron } from "./democracyclub.js";
 import { client, sendToChannel } from "./discord.js";
 import { bbcCronJob } from "./bbc.js";
+import { scoreboardEmbed } from "./messages.js";
 
 const election_date = "2024-05-02";
 let retry_count = 0;
@@ -63,10 +64,11 @@ async function initialiseCronSchedule() {
         if (last_update && new Date(last_update) > fifteen_minutes_ago) {
             console.log("Sending main scoreboard update");
             const scoreboard = await db.get("previous_scoreboard");
-            // TODO convert scoreboard to embed
+            // convert scoreboard to embed
+            let embed = scoreboardEmbed(scoreboard);
             const channel_list = await db.get("election_channels");
             for (const channel of channel_list) {
-                await sendToChannel(channel.channel, "## Election Results Update", { embeds: [scoreboard] });
+                await sendToChannel(channel.channel, "## Election Results Update", { embeds: [embed] });
             }
         } else {
             console.log("No main scoreboard update to send");

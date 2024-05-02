@@ -1,4 +1,4 @@
-import { Colors, EmbedBuilder } from "discord.js";
+import { Colors, Embed, EmbedBuilder } from "discord.js";
 import { readJSONFileSync } from "./network.js";
 
 const party_colours = readJSONFileSync("./static/party_hex.min.json");
@@ -69,4 +69,23 @@ function democracyClubResultEmbed(result, ballot, election) {
         .setColor(colour);
 }
 
-export { democracyClubResultEmbed }; 
+function scoreboardEmbed(scoreboard) {
+    let i = 0;
+    let description = scoreboard.status.message + "\n";
+    for (const card of (scoreboard.groups[0].scorecards || [])) {
+        if (i++ > 6) break;
+
+        description += `${card.title}: ${card.dataColumnsFormatted[0][0]} (${card.dataColumnsFormatted[0][1]}); ${card.dataColumnsFormatted[1][0]} (${card.dataColumnsFormatted[1][1]})\n`;
+    }
+
+    return new EmbedBuilder()
+        .setAuthor({
+            name: "BBC News",
+            url: "https://www.bbc.co.uk/news/election/2024/england/results"
+        })
+        .setTitle(scoreboard.heading)
+        .setDescription(description)
+        .setColor(Colors.Aqua);
+}
+
+export { democracyClubResultEmbed, scoreboardEmbed }; 

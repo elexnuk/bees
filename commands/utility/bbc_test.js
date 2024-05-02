@@ -1,6 +1,6 @@
 import { SlashCommandBuilder, PermissionFlagsBits } from "discord.js";
 import { keyv as db } from "../../state.js";
-import { democracyClubResultEmbed } from "../../messages.js";
+import { democracyClubResultEmbed, scoreboardEmbed } from "../../messages.js";
 import { fetchJson } from "../../network.js";
 import { bbcCronJob } from "../../bbc.js";
 
@@ -36,7 +36,7 @@ export async function execute(interaction) {
         for (const channel of channel_list) {
             try {
                 const channel_obj = await interaction.client.channels.fetch(channel.channel);
-                //await channel_obj.send(msg);
+                // await channel_obj.send(msg);
                 console.log(msg);
             } catch (err) {
                 console.error(`Failed to send message to channel ${channel.channel}: ${err}`);
@@ -44,5 +44,17 @@ export async function execute(interaction) {
         }
     }, "https://static.files.bbci.co.uk/elections/data/news/election/2021");
 
+    let scoreboard = await fetchJson("https://static.files.bbci.co.uk/elections/data/news/election/2021/england/results");
+
+    let embed = scoreboardEmbed(scoreboard.scoreboard);
+    const channel_list = await db.get("election_channels");
+    for (const channel of channel_list) {
+        try {
+            const channel_obj = await interaction.client.channels.fetch(channel.channel);
+            await channel_obj.send({ embeds: [embed] });
+        } catch (err) {
+            console.error(`Failed to send message to channel ${channel.channel}: ${err}`);
+        }
+    }
     
 }
