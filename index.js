@@ -65,7 +65,7 @@ async function initialiseCronSchedule() {
     // "*/15 * * * *" => post results to discord quarter hour
     // "0 22 * * 4" => polls close at 10pm on a Thursday
 
-    schedule("*/1 * * * *", async () => {
+    schedule("*/15 * * * *", async () => {
         // check for an update in the main counciller scoreboard and send if been updated in the last 15 minutes
         const last_update = await db.get("Scoreboard-LastUpdated");
         const current_time = new Date();
