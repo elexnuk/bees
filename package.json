@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "test": "node index.js",
-    "deploy": "node register-commands.js"
+    "deploy": "node register-commands.js",
+    "start": "node register-commands.js && node index.js"
   },
   "author": "jamesm2w",
   "license": "MIT",

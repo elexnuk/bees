@@ -10,5 +10,4 @@ RUN npm install --production
 
 COPY . .
 
-CMD ["node", "register-commands.js"]
-CMD ["node", "index.js"]
+CMD ["npm", "start"]
