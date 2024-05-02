@@ -28,8 +28,8 @@ import "dotenv/config";
 import { schedule } from "node-cron";
 
 import { keyv as db, checkKeyvData } from "./state.js";
-import { getAllElections, getAllBallots } from "./democracyclub.js";
-import { client } from "./discord.js";
+import { getAllElections, getAllBallots, runCron as dcCron } from "./democracyclub.js";
+import { client, sendToChannel } from "./discord.js";
 
 const election_date = "2024-05-02";
 let retry_count = 0;
@@ -54,6 +54,18 @@ async function initialiseCronSchedule() {
     // "*/2 * * * *" => check democlub, bbc, every 2 minutes
     // "0 * * * *" => post results to discord every hour
     // "0 22 * * 4" => polls close at 10pm on a Thursday
+
+    schedule("*/2 * * * *", async () => {
+        dcCron(sendToChannel);
+    });
+
+    schedule("0 22 * * 4", async () => {
+        // poll closed
+        const channel_list = await db.get("election_channels");
+        for (const channel of channel_list) {
+            await sendToChannel(channel.channel, "# Polls Have Closed! for the Local Elections 2024.");
+        }
+    });
 }
 await initialiseCronSchedule();
 

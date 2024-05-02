@@ -1,9 +1,10 @@
-import { Client, Collection, Events, GatewayIntentBits } from "discord.js";
+import { ChannelType, Client, Collection, Events, GatewayIntentBits } from "discord.js";
+import { keyv as db } from "./state.js";
 import fs from "fs";
 import path from "path";
 const __dirname = import.meta.dirname;
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });
 
 client.commands = new Collection();
 
@@ -24,6 +25,21 @@ for (const folder of folders) {
 		}
 	}
 }
+
+client.on(Events.MessageCreate, async message => {
+	// check if it's in an election channel
+	const channels = await db.get("election_channels");
+	for (const channel of channels) {
+		if (channel.channel === message.channel.id && message.channel.type == ChannelType.GuildAnnouncement) {
+			try {
+				await message.crosspost(); // crosspost the message
+			} catch (err) {
+				console.error(`Failed to crosspost message: ${err}`);
+			}
+			return;
+		}
+	}
+});
 
 client.on(Events.InteractionCreate, async interaction => {
 	if (!interaction.isChatInputCommand()) return;
@@ -58,4 +74,13 @@ client.once(Events.ClientReady, async readyClient => {
     }
 });
 
-export { client };
+async function sendToChannel(channel_id, message) {
+	try {
+		const channel = await client.channels.fetch(channel_id);
+		await channel.send(message);
+	} catch (err) {
+		console.error(`Failed to send message to channel ${channel_id}: ${err}`);
+	}
+}
+
+export { client, sendToChannel };

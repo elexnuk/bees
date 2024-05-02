@@ -4,6 +4,8 @@
  */
 
 import { fetchJson } from './network.js';
+import { keyv as db } from './state.js';
+import { democracyClubResultEmbed } from './messages.js';
 
 const api_url = process.env.DC_API_URL;
 const api_headers = {
@@ -98,22 +100,61 @@ async function getAllElections(election_date) {
 }
 
 async function checkResultsSince(last_date) {
-    const url = getResultDataUrl({ allSince: last_date });
+    const url = getResultDataUrl({ electionDate: "2024-05-02", allSince: last_date });
     try {
-        return await fetchJson(url);
+        const data = await fetchJson(url);
+        const results = data.results;
+
+        while (data.next) {
+            const next = data.next;
+            data = await fetchJson(next);
+            results.push(...data.results);
+        }
+
+        return results;
+
     } catch (err) {
         console.error(`Error fetching results: ${err}`);
         return [];
     }
 }
 
-/*
+async function runCron(sendToChannel) {
+    
+    const last_date = await db.get("LAST_DC_RESULT_TIME");
+    if (!last_date) {
+        last_date = (new Date()).toISOString();
+        console.log(`No last date found. Setting to ${last_date}`);
+        await db.set("LAST_DC_RESULT_TIME", last_date);
+    }
 
-1. fetch all election resuts since LAST_RESULT_TIME
-2. if there are new results => send them to the discord channel & update LAST_RESULT_TIME
-3. no results => do nothing
-- Runs every 2 minutes via cron
+    console.log(`Performing DemocracyClub cron. Last date: ${last_date}`);
 
-*/
+    const results = await checkResultsSince(last_date);
+    if (results.length > 0) {
+        const new_date = new Date().toISOString();
 
-export { getAllElections, getBallotInformation, getAllBallots, checkResultsSince };
+        console.log(`Found ${results.length} new results at ${new_date}`);
+        await db.set("LAST_DC_RESULT_TIME", new_date);
+
+        for (const result of results) {
+            const ballot_paper_id = result.ballot.ballot_paper_id;
+            const ballot_information = await db.get(ballot_paper_id);
+            const election_information = await db.get(ballot_information.election.election_id);
+
+            let embed = democracyClubResultEmbed(result, ballot_information, election_information);
+
+            const channel_list = await db.get("election_channels");
+            for (const channel of channel_list) {
+                // const channel_id = channel.channel;
+                // const channel_obj = await client.channels.fetch(channel_id);
+                //await channel_obj.send({ embeds: [embed] });
+                await sendToChannel(channel.channel, { embeds: [embed] });
+            }
+        }
+    } else {
+        console.log("DemocracyClub cron: No new results found");
+    }
+}
+
+export { getAllElections, getBallotInformation, getAllBallots, checkResultsSince, runCron };

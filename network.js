@@ -3,6 +3,8 @@
  * @brief Handles network requests
  */
 
+import fs from "fs";
+
 async function fetchJson(url, method = "GET", body = null, headers = {}) {
     try {
         // Construct the fetch options
@@ -29,4 +31,18 @@ async function fetchJson(url, method = "GET", body = null, headers = {}) {
     }
 }
 
-export { fetchJson };
+function readJSONFileSync(filePath) {
+    try {
+        // Read the JSON file synchronously
+        const jsonData = fs.readFileSync(filePath, 'utf8');
+        // Parse the JSON data
+        const parsedData = JSON.parse(jsonData);
+        return parsedData;
+    } catch (error) {
+        // If an error occurs, log it and return null
+        console.error('Error reading JSON file:', error);
+        return null;
+    }
+}
+
+export { fetchJson, readJSONFileSync };
