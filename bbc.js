@@ -25,10 +25,12 @@ async function getBBCCalls(sendMessageToElectionChannels, api_url) {
             const winnerFlash = council.winnerFlash;
 
             const previousWinnerFlash = await db.get(`Council-${title}`);
-            if (!previousWinnerFlash) {
+            if (previousWinnerFlash === undefined) {
                 await db.set(`Council-${title}`, winnerFlash);
                 continue;
             }
+
+            console.log("\tCouncil: ", title, winnerFlash?.flash, previousWinnerFlash?.flash)
 
             if (winnerFlash) {
                 // Check if the winner "flash" text has changed
