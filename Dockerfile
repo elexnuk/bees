@@ -10,5 +10,5 @@ RUN npm install --production
 
 COPY . .
 
-RUN node register-commands.js
+#RUN node register-commands.js
 RUN node index.js
