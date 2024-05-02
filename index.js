@@ -65,7 +65,7 @@ async function initialiseCronSchedule() {
     // "*/15 * * * *" => post results to discord quarter hour
     // "0 22 * * 4" => polls close at 10pm on a Thursday
 
-    schedule("*/15 * * * *", async () => {
+    schedule("*/1 * * * *", async () => {
         // check for an update in the main counciller scoreboard and send if been updated in the last 15 minutes
         const last_update = await db.get("Scoreboard-LastUpdated");
         const current_time = new Date();
@@ -74,13 +74,16 @@ async function initialiseCronSchedule() {
             console.log(new Date().toISOString() + "] Sending main scoreboard update");
             
             let embeds = [
-                createScoreboardSummary(), 
-                createMayorboardSummary("Mayorboard"),
-                createMayorboardSummary("EnglandPCC"),
-                createMayorboardSummary("WalesPCC")
+                (await createScoreboardSummary()), 
+                (await createMayorboardSummary("Mayorboard")),
+                (await createMayorboardSummary("EnglandPCC")),
+                (await createMayorboardSummary("WalesPCC"))
             ];
-
-            await sendToAllElectionChannels({ embeds });
+            try {
+                await sendToAllElectionChannels({ embeds });
+            } catch (err) {
+                console.error("Error sending main scoreboard update: ", err);
+            }
         } else {
             console.log(new Date().toISOString() + "] No main scoreboard update to send");
         }
