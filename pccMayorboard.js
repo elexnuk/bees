@@ -19,11 +19,11 @@ async function handlePCCMayorboard(key, mayorboard, sendMessageCallback) {
     const groups = mayorboard.groups[0].scorecards;
     for (const group of groups) {
         const winnerTitle = group.title; // Winner's Name or "Awaiting Result"
-        const party = group.party; // Party Name
+        const party = group.superTitle; // Party Name
         const colour = group.accentColour;
         const name = group.contextLabel;
         const url = group.contextHref;
-        const previousWinnerData = group.previousWinnerData
+        const previousWinnerData = group.previousWinner;
 
         mayorboardKeys.push(name);
 
@@ -42,8 +42,10 @@ async function handlePCCMayorboard(key, mayorboard, sendMessageCallback) {
             continue;
         }
 
+        console.log(`\t${key}: ${name}`, currentData.winner, previousData.winner);
+
         // There's been a change: update the database, or there is a winner which we can post
-        if (currentData.winner !== previousData.winner || currentData.winner !== "Awaiting result") {
+        if (currentData.winner !== previousData.winner) {
             await db.set(`${key}-${name}`, currentData);
             await db.set(`${key}-LastUpdated`, new Date().toISOString());
 
@@ -54,12 +56,12 @@ async function handlePCCMayorboard(key, mayorboard, sendMessageCallback) {
 
             if (!previousWinnerData) {
                 console.log("\tWinner Changed but no previous data: ", currentData);
-                sendMessageCallback(`# Result ${name}: ${winnerTitle} elected. ${party} win.\n${url}`);
+                sendMessageCallback(`# Result ${name}: ${winnerTitle} elected. ${party} win.\n${url ? url : ""}`);
                 continue;
             }
-            const gain = previousWinnerData.party === currentData.party ? "Hold" : "Gain from " + previousWinnerData.superTitle;
+            const gain = previousWinnerData.superTitle === currentData.party ? "Hold" : "Gain from " + previousWinnerData.superTitle;
             console.log("\tWinner Changed: ", currentData, previousWinnerData, gain);
-            sendMessageCallback(`# Result ${name}: ${winnerTitle} elected. ${party} ${gain} \n${url}`);
+            sendMessageCallback(`# Result ${name}: ${winnerTitle} elected. ${party} ${gain} \n${url ? url : ""}`);
         }
     }
 
