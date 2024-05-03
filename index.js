@@ -90,7 +90,7 @@ async function initialiseCronSchedule() {
     });
 
     schedule("*/2 * * * *", async () => {
-        await dcCron(sendToChannel);
+        await dcCron(sendToAllElectionChannels);
         await bbcCronJob(sendToAllElectionChannels);
     });
 

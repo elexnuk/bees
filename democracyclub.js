@@ -138,14 +138,18 @@ async function runCron(sendToAllChannels) {
         console.log(`${new Date().toISOString()}] Found ${results.length} new results at ${new_date}`);
         await db.set("LAST_DC_RESULT_TIME", new_date);
 
-        for (const result of results) {
-            const ballot_paper_id = result.ballot.ballot_paper_id;
-            const ballot_information = await db.get(ballot_paper_id);
-            const election_information = await db.get(ballot_information.election.election_id);
-
-            let embed = democracyClubResultEmbed(result, ballot_information, election_information);
-
-            await sendToAllChannels({ content: "## New DemocracyClub Result", embeds: [embed] });
+        for (const result of results) { 
+            try {
+                const ballot_paper_id = result.ballot.ballot_paper_id;
+                const ballot_information = await db.get(ballot_paper_id);
+                const election_information = await db.get(ballot_information.election.election_id);
+    
+                let embed = democracyClubResultEmbed(result, ballot_information, election_information);
+    
+                await sendToAllChannels({ content: "## New DemocracyClub Result", embeds: [embed] });
+            } catch (err) {
+                console.error(`Error processing result: ${err}`);
+            }
         }
     } else {
         console.log(new Date().toISOString() + "] DemocracyClub cron: No new results found");
